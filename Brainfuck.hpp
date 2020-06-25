@@ -65,15 +65,32 @@ public:
         return true;
     }
 
-    char GetCurrentToken () {
+    uint32_t GetCursor () const
+    {
+        return cursor;
+    }
+
+    uint32_t GetPtr    () const
+    {
+        return ptr;
+    }
+
+    uint8_t GetMemoryAt(uint32_t p) {
+        return ram[p];
+    }
+
+    char GetCurrentToken () const
+    {
         return source[cursor];
     }
 
-    std::map<uint32_t, uint8_t> GetMemory() {
+    std::map<uint32_t, uint8_t> GetMemory() const
+    {
         return ram;
     }
 
-    uint32_t GetUsedMemorySize() {
+    uint32_t GetUsedMemorySize() const
+    {
         return ram.size();
     }
 
@@ -111,13 +128,13 @@ private:
     }
     bool ValPrint () // .
     {
-        printf("%c", ram[ptr]);
+        std::cout << ram[ptr];
         return true;
     }
-    bool Input () // .
+    bool Input () // ,
     {
         int value;
-        scanf("%i", &value);
+        std::cin >> value;
         ram[ptr] = value;
         return true;
     }

@@ -8,11 +8,14 @@
 #include <bits/stdc++.h>
 
 namespace Brainfuck {
+typedef struct CLUSTER_SIZE {
+    int value;
+    CLUSTER_SIZE(int value) : value(value) {}
+} CLUSTER_SIZE;
+const CLUSTER_SIZE ONE_BYTE   = { 8};
+const CLUSTER_SIZE TWO_BYTES  = {16};
+const CLUSTER_SIZE FOUR_BYTES = {32};
 
-const uint8_t ONE_BYTE   =  8;
-const uint8_t TWO_BYTES  = 16;
-const uint8_t FOUR_BYTES = 32;
- 
 
 class Parser {
 public:
@@ -100,11 +103,11 @@ public:
     {
         return ram.size();
     }
-	
-	void SetClusterSize(uint8_t size) 
-	{
-		clust_size = size;
-	}
+
+    void SetClusterSize(CLUSTER_SIZE c_size)
+    {
+        clust_size = c_size.value;
+    }
 
 private:
     std::string source  = "";
@@ -112,7 +115,7 @@ private:
     uint32_t    cursor  = 0;
     uint32_t    ptr     = 0;
     bool        BREAK   = false;
-	uint8_t clust_size  = 8;
+    uint8_t clust_size  = 8;
 
     std::map<uint32_t, uint32_t> ram; // virtual memory
     std::map<char, bool (Brainfuck::Parser::*) () > instr_map; // instruction map
@@ -122,13 +125,13 @@ private:
     bool ValDecr  () // -
     {
         ram[ptr]--;
-		trucateCluster();
+        truncateCluster();
         return true;
     }
     bool ValIncr  () // +
     {
         ram[ptr]++;
-		trucateCluster();
+        truncateCluster();
         return true;
     }
     bool PtrDecr  () // <
@@ -190,9 +193,10 @@ private:
         instr_map[']'] = &Brainfuck::Parser::LoopClose ;
         instr_map['#'] = &Brainfuck::Parser::Break     ;
     }
-	
-	void trucateCluster() 
+
+	void truncateCluster()
 	{
+        // (*cluster) %= size_cluster
 		switch (clust_size) {
 			case 8:
 				ram[ptr] &= 0x000000FF;
@@ -205,10 +209,10 @@ private:
 				break;
 		}
 	}
-	
+
     void DisplayError(std::string error, uint32_t pos) {
         printf("[Error] %s at cursor=%d, char. \"%c\"", error.c_str(), pos, source[pos]);
     }
 };
-	
+
 }

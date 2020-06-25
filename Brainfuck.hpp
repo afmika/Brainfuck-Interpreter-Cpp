@@ -7,20 +7,27 @@
 #pragma once
 #include <bits/stdc++.h>
 
-class Brainfuck {
+namespace Brainfuck {
+
+const uint8_t ONE_BYTE   =  8;
+const uint8_t TWO_BYTES  = 16;
+const uint8_t FOUR_BYTES = 32;
+ 
+
+class Parser {
 public:
-    Brainfuck(std::string source) {
+    Parser(std::string source) {
         this->source = source;
         init();
     };
 
-    Brainfuck(const char * source) {
+    Parser(const char * source) {
         std::string tmp(source);
         this->source = tmp;
         init();
     }
 
-    virtual ~Brainfuck() {};
+    virtual ~Parser() {};
 
     bool verifyLoop () {
         std::stack<uint32_t> loops;
@@ -84,7 +91,7 @@ public:
         return source[cursor];
     }
 
-    std::map<uint32_t, uint8_t> GetMemory() const
+    std::map<uint32_t, uint32_t> GetMemory() const
     {
         return ram;
     }
@@ -93,6 +100,11 @@ public:
     {
         return ram.size();
     }
+	
+	void SetClusterSize(uint8_t size) 
+	{
+		clust_size = size;
+	}
 
 private:
     std::string source  = "";
@@ -100,20 +112,23 @@ private:
     uint32_t    cursor  = 0;
     uint32_t    ptr     = 0;
     bool        BREAK   = false;
+	uint8_t clust_size  = 8;
 
-    std::map<uint32_t, uint8_t> ram; // virtual memory
-    std::map<char, bool (Brainfuck::*) () > instr_map; // instruction map
+    std::map<uint32_t, uint32_t> ram; // virtual memory
+    std::map<char, bool (Brainfuck::Parser::*) () > instr_map; // instruction map
     std::stack<uint32_t> open_loop_pos;
 
     // instructions
     bool ValDecr  () // -
     {
         ram[ptr]--;
+		trucateCluster();
         return true;
     }
     bool ValIncr  () // +
     {
         ram[ptr]++;
+		trucateCluster();
         return true;
     }
     bool PtrDecr  () // <
@@ -128,7 +143,7 @@ private:
     }
     bool ValPrint () // .
     {
-        std::cout << ram[ptr];
+        std::cout << (char) (ram[ptr] & 0xFF);
         return true;
     }
     bool Input () // ,
@@ -165,18 +180,35 @@ private:
     void init () {
         if ( ! verifyLoop() ) BREAK = true;
         // ".,+-<>[]#"
-        instr_map['.'] = &Brainfuck::ValPrint  ;
-        instr_map[','] = &Brainfuck::Input     ;
-        instr_map['+'] = &Brainfuck::ValIncr   ;
-        instr_map['-'] = &Brainfuck::ValDecr   ;
-        instr_map['<'] = &Brainfuck::PtrDecr   ;
-        instr_map['>'] = &Brainfuck::PtrIncr   ;
-        instr_map['['] = &Brainfuck::LoopOpen  ;
-        instr_map[']'] = &Brainfuck::LoopClose ;
-        instr_map['#'] = &Brainfuck::Break     ;
+        instr_map['.'] = &Brainfuck::Parser::ValPrint  ;
+        instr_map[','] = &Brainfuck::Parser::Input     ;
+        instr_map['+'] = &Brainfuck::Parser::ValIncr   ;
+        instr_map['-'] = &Brainfuck::Parser::ValDecr   ;
+        instr_map['<'] = &Brainfuck::Parser::PtrDecr   ;
+        instr_map['>'] = &Brainfuck::Parser::PtrIncr   ;
+        instr_map['['] = &Brainfuck::Parser::LoopOpen  ;
+        instr_map[']'] = &Brainfuck::Parser::LoopClose ;
+        instr_map['#'] = &Brainfuck::Parser::Break     ;
     }
-
+	
+	void trucateCluster() 
+	{
+		switch (clust_size) {
+			case 8:
+				ram[ptr] &= 0x000000FF;
+				break;
+			case 16:
+				ram[ptr] &= 0x0000FFFF;
+				break;
+			default:
+				// do nothing
+				break;
+		}
+	}
+	
     void DisplayError(std::string error, uint32_t pos) {
         printf("[Error] %s at cursor=%d, char. \"%c\"", error.c_str(), pos, source[pos]);
     }
 };
+	
+}

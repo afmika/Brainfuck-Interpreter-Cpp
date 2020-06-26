@@ -14,25 +14,22 @@ void runTests () {
         // AFMIKA
         "+++[>+++++[>+++++<-]<-]>>----------.+++++.+++++++.----.++.----------.",
         // ASCII Chars
-        //".+[.+]",
+        ".+[.+]",
+
         // [!] SLOW
+
         // serpinski
-        // ">++++[<++++++++>-]>++++++++[>++++<-]>>++>>>+>>>+<<<<<<<<<<[-[->+<]>[-<+>>>.<<]>>>[[->++++++++[>++++<-]>.<<[->+<]+>[->++++++++++<<+>]>.[-]>]]+<<<[-[->+<]+>[-<+>>>-[->+<]++>[-<->]<<<]<<<<]++++++++++.+++.[-]<]+++++",
+        ">++++[<++++++++>-]>++++++++[>++++<-]>>++>>>+>>>+<<<<<<<<<<[-[->+<]>[-<+>>>.<<]>>>[[->++++++++[>++++<-]>.<<[->+<]+>[->++++++++++<<+>]>.[-]>]]+<<<[-[->+<]+>[-<+>>>-[->+<]++>[-<->]<<<]<<<<]++++++++++.+++.[-]<]+++++",
     };
 
     for (auto source : tests ) {
-        Brainfuck::Parser parser( source, false );
+        Brainfuck::Parser parser( source, true );
+        // parser.SetOutputMode(Brainfuck::OUTPUT_MODE::INT);
+        parser.SetOutputMode(Brainfuck::OUTPUT_MODE::CHAR); // default
+        printf("Source : %s\n", parser.GetSource().value.c_str() );
         parser.SetClusterSize( Brainfuck::ONE_BYTE );
-        /*
-        do {
-            std::string token = parser.GetCurrentToken();
-            printf("%s", token.c_str());
-            getchar();
-        } while ( parser.Next() );
-        */
         parser.Run();
-
-        printf("\n");
+        printf("\n----------------------\n");
     }
 }
 

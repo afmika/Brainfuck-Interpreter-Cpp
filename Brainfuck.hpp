@@ -15,6 +15,7 @@ typedef struct CLUSTER_SIZE {
         value(value) {}
 } CLUSTER_SIZE;
 
+
 typedef struct Source {
     std::string value;
     bool isOptimized;
@@ -31,9 +32,13 @@ typedef struct Source {
         value(value), isOptimized(isOptimized) {}
 } Source;
 
+// constants
 const CLUSTER_SIZE ONE_BYTE   = { 8};
 const CLUSTER_SIZE TWO_BYTES  = {16};
 const CLUSTER_SIZE FOUR_BYTES = {32};
+enum OUTPUT_MODE {
+    CHAR, INT
+};
 
 const std::string symbols = ".,+-<>[]#";
 
@@ -195,7 +200,7 @@ public:
         return true;
     }
 
-    bool Next() {
+    bool Next () {
         if ( BREAK ) return false;
         if ( source.isOptimized ) {
             return RunTokens ();
@@ -208,6 +213,10 @@ public:
     }
 
     // Getters
+    Source GetSource () const {
+        return source;
+    }
+
     uint32_t GetCursor () const
     {
         return cursor;
@@ -237,14 +246,21 @@ public:
         return ram.size();
     }
 
+
+    // Setters
     void SetClusterSize(CLUSTER_SIZE c_size)
     {
         clust_size = c_size.value;
     }
 
+    void SetOutputMode(OUTPUT_MODE m) {
+        OUTPUT = m;
+    }
+
 private:
     Source      source  = {"", false};
     std::vector<std::string> tokens;
+    uint8_t OUTPUT = OUTPUT_MODE::CHAR;
 
     uint32_t    cursor  = 0;
     uint32_t    ptr     = 0;
@@ -252,57 +268,61 @@ private:
     uint8_t clust_size  = 8;
 
     std::map<uint32_t, uint32_t> ram; // virtual memory
-    std::map<char, bool (Brainfuck::Parser::*) () > instr_map; // instruction map
+    std::map<char, bool (Brainfuck::Parser::*) (uint32_t) > instr_map; // instruction map
     std::stack<uint32_t> open_loop_pos;
 
     // instructions
-    bool ValDecr  () // -
+    bool ValDecr  (uint32_t value) // -
     {
-        ram[ptr]--;
+        ram[ptr] -= value;
         truncateCluster();
         return true;
     }
 
-    bool ValIncr  () // +
+    bool ValIncr  (uint32_t value) // +
     {
-        ram[ptr]++;
+        ram[ptr] += value;
         truncateCluster();
         return true;
     }
 
-    bool PtrDecr  () // <
+    bool PtrDecr  (uint32_t value) // <
     {
-        ptr++;
+        ptr += value;
         return true;
     }
 
-    bool PtrIncr  () // >
+    bool PtrIncr  (uint32_t value) // >
     {
-        ptr--;
+        ptr -= value;
         return true;
     }
 
-    bool ValPrint () // .
+    bool ValPrint (uint32_t value) // .
     {
-        std::cout << (char) (ram[ptr] & 0xFF);
+        if ( OUTPUT_MODE::CHAR == OUTPUT ) {
+            std::cout << (char) (ram[ptr] & 0xFF);
+        } else {
+            std::cout << (int) (ram[ptr] & 0xFF);
+        }
         return true;
     }
 
-    bool Input () // ,
+    bool Input (uint32_t value) // ,
     {
-        int value;
-        std::cin >> value;
-        ram[ptr] = value;
+        int val;
+        std::cin >> val;
+        ram[ptr] = val;
         return true;
     }
 
-    bool LoopOpen () // [
+    bool LoopOpen (uint32_t value) // [
     {
         open_loop_pos.push(cursor);
         return true;
     }
 
-    bool LoopClose() // ]
+    bool LoopClose(uint32_t value) // ]
     {
         if ( ram[ptr] != 0 ) {
             cursor = open_loop_pos.top();
@@ -315,7 +335,7 @@ private:
         return true;
     }
 
-    bool Break    () // #
+    bool Break    (uint32_t value) // #
     {
         BREAK = true;
         return true;
@@ -360,7 +380,7 @@ private:
             return false;
         } else {
             // printf("%c", token);
-            bool all_ok = (this->*instr_map[token]) ();
+            bool all_ok = (this->*instr_map[token]) ( 1 );
             if ( !all_ok ) {
                 DisplayError("Program stopped", cursor);
                 return false;
@@ -383,18 +403,13 @@ private:
                 DisplayError("Program stopped", cursor);
                 return false;
             } else {
-                all_ok = (this->*instr_map[symbol]) ();
+                all_ok = (this->*instr_map[symbol]) ( 1 );
             }
         } else {
             std::string str_number = token.substr(1, token.size());
             int n_times = str_to_int(str_number);
             // printf("%c x %d => %d\n", symbol, n_times, sign[symbol] * n_times);
-            if ( symbol == '-' || symbol == '+' ) {
-                ram[ptr] += sign[symbol] * n_times;
-            } else {
-                ptr += sign[symbol] * n_times;
-            }
-            all_ok = true;
+            all_ok =  (this->*instr_map[symbol]) ( n_times );
         }
         if ( !all_ok ) {
             DisplayError("Program stopped", cursor);

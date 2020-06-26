@@ -8,6 +8,7 @@
 #include <bits/stdc++.h>
 
 namespace Brainfuck {
+
 // data structures
 typedef struct CLUSTER_SIZE {
     int value;
@@ -36,11 +37,10 @@ typedef struct Source {
 const CLUSTER_SIZE ONE_BYTE   = { 8};
 const CLUSTER_SIZE TWO_BYTES  = {16};
 const CLUSTER_SIZE FOUR_BYTES = {32};
+const std::string symbols = ".,+-<>[]#";
 enum OUTPUT_MODE {
     CHAR, INT
 };
-
-const std::string symbols = ".,+-<>[]#";
 
 std::map<char, int> sign = {
     {'-', -1}, {'+', 1},
@@ -56,6 +56,7 @@ int str_to_int(std::string str) {
     iss >> f;
     return f;
 }
+
 bool isValidSymbol(char c) {
     bool found = false;
     for (auto symbol : symbols) found = found || (symbol == c );
@@ -108,7 +109,7 @@ std::string CompressCodeUsing(std::map<char, int> chars, std::string source) {
                 chars[p.first] = 0;
             }
             for (auto p : chars) {
-                // same sign
+                // => same sign
                 // => same nature
                 // => the product should be greater than zero
                 if ( sign[p.first] * total > 1 ) {
@@ -155,7 +156,6 @@ Source UncompressCode(Source source) {
     }
     return result;
 }
-
 
 
 // Main class

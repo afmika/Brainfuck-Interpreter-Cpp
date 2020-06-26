@@ -13,23 +13,25 @@ void runTests () {
         "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
         // AFMIKA
         "+++[>+++++[>+++++<-]<-]>>----------.+++++.+++++++.----.++.----------.",
-
         // ASCII Chars
-        ".+[.+]",
-
+        //".+[.+]",
         // [!] SLOW
         // serpinski
         // ">++++[<++++++++>-]>++++++++[>++++<-]>>++>>>+>>>+<<<<<<<<<<[-[->+<]>[-<+>>>.<<]>>>[[->++++++++[>++++<-]>.<<[->+<]+>[->++++++++++<<+>]>.[-]>]]+<<<[-[->+<]+>[-<+>>>-[->+<]++>[-<->]<<<]<<<<]++++++++++.+++.[-]<]+++++",
     };
 
     for (auto source : tests ) {
-		Brainfuck::Source compressed   = Brainfuck::CompressCode( source );
-		Brainfuck::Source uncompressed = Brainfuck::UncompressCode( compressed );
-		printf("COMPRESSION : %s\n", (uncompressed.value.compare(source) == 0 ? "SUCCESS" : "FAIL") );
-
         Brainfuck::Parser parser( source, false );
         parser.SetClusterSize( Brainfuck::ONE_BYTE );
+        /*
+        do {
+            std::string token = parser.GetCurrentToken();
+            printf("%s", token.c_str());
+            getchar();
+        } while ( parser.Next() );
+        */
         parser.Run();
+
         printf("\n");
     }
 }

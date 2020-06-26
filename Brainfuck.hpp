@@ -75,12 +75,10 @@ std::vector<std::string> tokenizeSource(Source source) {
         if ( c != '(' ) {
             tmp += c;
         } else {
-            if ( c == '(') {
+            i++;
+            while (source.at(i) != ')') {
+                tmp += source.at(i);
                 i++;
-                while (source.at(i) != ')') {
-                    tmp += source.at(i);
-                    i++;
-                }
             }
         }
         tokens.push_back(tmp);
@@ -161,6 +159,7 @@ public:
     Parser(std::string source) {
         source = removeInvalidSymbols(source);
         this->source = {source, false};
+        tokens = tokenizeSource(this->source);
         init();
     };
     Parser(std::string source, bool optimize) {
@@ -170,6 +169,7 @@ public:
         } else {
             this->source = {source, false};
         }
+        tokens = tokenizeSource(this->source);
         init();
     };
 
@@ -196,72 +196,15 @@ public:
     }
 
     bool Next() {
-        if ( source.isOptimized ) {
-            DisplayError("The source has been compressed/optimized. Use \"Run\" instead", 0);
-            return false;
-        }
-
         if ( BREAK ) return false;
-        if ( cursor == source.value.size() ) {
-            BREAK = true;
-            return false;
+        if ( source.isOptimized ) {
+            return RunTokens ();
         }
-
-        char token = source.at(cursor);
-        if ( instr_map.find(token) == instr_map.end() ) {
-            DisplayError("Program stopped", cursor);
-            return false;
-        } else {
-            // printf("%c", token);
-            bool all_ok = (this->*instr_map[token]) ();
-            if ( !all_ok ) {
-                DisplayError("Program stopped", cursor);
-                return false;
-            }
-        }
-        ++cursor;
-        return true;
+        return RunAsString ();
     }
 
     void Run () {
-        if ( ! source.isOptimized ) {
-            while ( Next() ) /*naa--thing*/;
-            return;
-        }
-        // printf("%s\n", source.value.c_str());
-
-        std::vector<std::string> tokens = tokenizeSource(source);
-        for (size_t i = 0; i < tokens.size(); i++ ) {
-            std::string token = tokens[i];
-            // printf("%s : ", token.c_str());
-            char symbol = token[0];
-            if ( token.size() > 1 ) {
-                std::string str_number = token.substr(1, token.size());
-                int n_times = str_to_int(str_number);
-                // printf("%c x %d => %d", symbol, n_times, sign[symbol] * n_times);
-                if ( symbol == '-' || symbol == '+' ) {
-                    ram[ptr] += sign[symbol] * n_times;
-                } else {
-                    ptr += sign[symbol] * n_times;
-                }
-            } else {
-                if ( symbol == '[' || symbol == ']' ) {
-                    if ( symbol == '[') {
-                        open_loop_pos.push(i);
-                    } else {
-                        if ( ram[ptr] != 0 ) {
-                            i = open_loop_pos.top();
-                        } else {
-                            open_loop_pos.pop();
-                        }
-                    }
-                } else {
-                    // , or . or single(<>+-)
-                    (this->*instr_map[symbol]) ();
-                }
-            }
-            // printf("\n");
-        }
+        while ( Next() ) /*naa--thing*/;
     }
 
     // Getters
@@ -279,9 +222,9 @@ public:
         return ram[p];
     }
 
-    char GetCurrentToken () // [NOTE] : not const
+    std::string GetCurrentToken () // [NOTE] : not const
     {
-        return source.at(cursor);
+        return tokens[cursor];
     }
 
     std::map<uint32_t, uint32_t> GetMemory() const
@@ -301,6 +244,8 @@ public:
 
 private:
     Source      source  = {"", false};
+    std::vector<std::string> tokens;
+
     uint32_t    cursor  = 0;
     uint32_t    ptr     = 0;
     bool        BREAK   = false;
@@ -402,6 +347,61 @@ private:
                 // do nothing
                 break;
         }
+    }
+
+    bool RunAsString () {
+        if ( cursor == source.value.size() ) {
+            BREAK = true;
+            return false;
+        }
+        char token = source.at(cursor);
+        if ( instr_map.find(token) == instr_map.end() ) {
+            DisplayError("Program stopped", cursor);
+            return false;
+        } else {
+            // printf("%c", token);
+            bool all_ok = (this->*instr_map[token]) ();
+            if ( !all_ok ) {
+                DisplayError("Program stopped", cursor);
+                return false;
+            }
+        }
+        ++cursor;
+        return true;
+    }
+
+    bool RunTokens () {
+        if ( cursor == tokens.size() ) {
+            BREAK = true;
+            return false;
+        }
+        bool all_ok = false;
+        std::string token = tokens[cursor];
+        char symbol = token[0];
+        if ( token.size() == 1 ) {
+            if (  instr_map.find(symbol) == instr_map.end() ) {
+                DisplayError("Program stopped", cursor);
+                return false;
+            } else {
+                all_ok = (this->*instr_map[symbol]) ();
+            }
+        } else {
+            std::string str_number = token.substr(1, token.size());
+            int n_times = str_to_int(str_number);
+            // printf("%c x %d => %d\n", symbol, n_times, sign[symbol] * n_times);
+            if ( symbol == '-' || symbol == '+' ) {
+                ram[ptr] += sign[symbol] * n_times;
+            } else {
+                ptr += sign[symbol] * n_times;
+            }
+            all_ok = true;
+        }
+        if ( !all_ok ) {
+            DisplayError("Program stopped", cursor);
+            return false;
+        }
+        ++cursor;
+        return true;
     }
 
     void DisplayError(std::string error, uint32_t pos) {

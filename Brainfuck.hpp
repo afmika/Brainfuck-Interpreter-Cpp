@@ -35,6 +35,8 @@ const CLUSTER_SIZE ONE_BYTE   = { 8};
 const CLUSTER_SIZE TWO_BYTES  = {16};
 const CLUSTER_SIZE FOUR_BYTES = {32};
 
+const std::string symbols = ".,+-<>[]#";
+
 std::map<char, int> sign = {
     {'-', -1}, {'+', 1},
     {'<', -1}, {'>', 1}
@@ -42,6 +44,50 @@ std::map<char, int> sign = {
 
 
 // helpers
+
+int str_to_int(std::string str) {
+    std::istringstream iss(str);
+    int f = 0;
+    iss >> f;
+    return f;
+}
+bool isValidSymbol(char c) {
+    bool found = false;
+    for (auto symbol : symbols) found = found || (symbol == c );
+    return found;
+}
+
+std::string removeInvalidSymbols(std::string source) {
+    std::string result = "";
+    for (char c : source) {
+        if ( isValidSymbol(c) ) {
+            result += c;
+        }
+    }
+    return result;
+}
+
+std::vector<std::string> tokenizeSource(Source source) {
+    std::vector<std::string> tokens;
+    for (size_t i = 0; i < source.value.size(); i++) {
+        char c = source.at(i);
+        std::string tmp = "";
+        if ( c != '(' ) {
+            tmp += c;
+        } else {
+            if ( c == '(') {
+                i++;
+                while (source.at(i) != ')') {
+                    tmp += source.at(i);
+                    i++;
+                }
+            }
+        }
+        tokens.push_back(tmp);
+    }
+    return tokens;
+}
+
 std::string CompressCodeUsing(std::map<char, int> chars, std::string source) {
     source += "#";
     std::string out = "";
@@ -87,32 +133,24 @@ Source CompressCode(std::string source) {
     return result;
 }
 
-std::vector<std::string> tokenizeSource(Source source) {
-    std::vector<std::string> tokens;
-    for (size_t i = 0; i < source.value.size(); i++) {
-        char c = source.at(i);
-        std::string tmp = "";
-        if ( c != '(' ) {
-            tmp += c;
-        } else {
-            if ( c == '(') {
-                i++;
-                while (source.at(i) != ')') {
-                    tmp += source.at(i);
-                    i++;
-                }
+Source UncompressCode(Source source) {
+    std::vector<std::string> tokens = tokenizeSource(source);
+    Source result("", false);
+    for (size_t i = 0; i < tokens.size(); i++ ) {
+        std::string token = tokens[i];
+        char symbol = token[0];
+        if ( token.size() > 1 ) {
+            std::string str_number = token.substr(1, token.size());
+            int n_times = str_to_int(str_number);
+            while ( n_times > 0 ) {
+                result.value += symbol;
+                n_times--;
             }
+        } else {
+            result.value += symbol;
         }
-        tokens.push_back(tmp);
     }
-    return tokens;
-}
-
-int str_to_int(std::string str) {
-    std::istringstream iss(str);
-    int f = 0;
-    iss >> f;
-    return f;
+    return result;
 }
 
 
@@ -121,10 +159,12 @@ int str_to_int(std::string str) {
 class Parser {
 public:
     Parser(std::string source) {
+        source = removeInvalidSymbols(source);
         this->source = {source, false};
         init();
     };
     Parser(std::string source, bool optimize) {
+        source = removeInvalidSymbols(source);
         if ( optimize ) {
             this->source = CompressCode(source);
         } else {
@@ -188,17 +228,17 @@ public:
             while ( Next() ) /*naa--thing*/;
             return;
         }
-        printf("%s\n", source.value.c_str());
+        // printf("%s\n", source.value.c_str());
 
         std::vector<std::string> tokens = tokenizeSource(source);
         for (size_t i = 0; i < tokens.size(); i++ ) {
             std::string token = tokens[i];
-            printf("%s : ", token.c_str());
+            // printf("%s : ", token.c_str());
             char symbol = token[0];
             if ( token.size() > 1 ) {
                 std::string str_number = token.substr(1, token.size());
                 int n_times = str_to_int(str_number);
-                printf("%c x %d => %d", symbol, n_times, sign[symbol] * n_times);
+                // printf("%c x %d => %d", symbol, n_times, sign[symbol] * n_times);
                 if ( symbol == '-' || symbol == '+' ) {
                     ram[ptr] += sign[symbol] * n_times;
                 } else {
@@ -209,7 +249,7 @@ public:
                     if ( symbol == '[') {
                         open_loop_pos.push(i);
                     } else {
-                        if ( ram[ptr] > 0 ) {
+                        if ( ram[ptr] != 0 ) {
                             i = open_loop_pos.top();
                         } else {
                             open_loop_pos.pop();
@@ -220,7 +260,7 @@ public:
                     (this->*instr_map[symbol]) ();
                 }
             }
-            printf("\n");
+            // printf("\n");
         }
     }
 
@@ -261,7 +301,6 @@ public:
 
 private:
     Source      source  = {"", false};
-    std::string symbols = ".,+-<>[]#";
     uint32_t    cursor  = 0;
     uint32_t    ptr     = 0;
     bool        BREAK   = false;
@@ -320,7 +359,7 @@ private:
 
     bool LoopClose() // ]
     {
-        if ( ram[ptr] > 0 ) {
+        if ( ram[ptr] != 0 ) {
             cursor = open_loop_pos.top();
         } else {
             if ( open_loop_pos.empty() ) {

@@ -260,7 +260,7 @@ public:
 private:
     Source      source  = {"", false};
     std::vector<std::string> tokens;
-    uint8_t OUTPUT = OUTPUT_MODE::CHAR;
+    uint8_t OUTPUT      = OUTPUT_MODE::CHAR;
 
     uint32_t    cursor  = 0;
     uint32_t    ptr     = 0;

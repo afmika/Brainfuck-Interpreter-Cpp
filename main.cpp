@@ -55,8 +55,8 @@ void printInfos (std::string str) {
     printf("#                     JUNE 2020                     #\n");
     printf("#                [github.com/afmika]                #\n");
     printf("#####################################################\n");
-    printf("\ninfo | -i : Information    [arg : none]\n");
-    printf("\ntest | -t : Run all test   [arg : none]\n");
+    printf("\ninfo | -i : Information    [arg : none    ]\n");
+    printf("\ntest | -t : Run all test   [arg : none    ]\n");
     printf("\nrun  | -r : Execute a file [arg : filepath]\n");
 }
 

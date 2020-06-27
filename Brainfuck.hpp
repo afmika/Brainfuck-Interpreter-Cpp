@@ -38,7 +38,7 @@ const CLUSTER_SIZE ONE_BYTE   = { 8};
 const CLUSTER_SIZE TWO_BYTES  = {16};
 const CLUSTER_SIZE FOUR_BYTES = {32};
 const std::string symbols = ".,+-<>[]#";
-enum OUTPUT_MODE {
+enum IO_MODE {
     CHAR, INT
 };
 
@@ -227,7 +227,7 @@ public:
         return ptr;
     }
 
-    uint8_t GetMemoryAt(uint32_t p) {
+    uint8_t GetMemoryAt (uint32_t p) {
         return ram[p];
     }
 
@@ -236,31 +236,35 @@ public:
         return tokens[cursor];
     }
 
-    std::map<uint32_t, uint32_t> GetMemory() const
+    std::map<uint32_t, uint32_t> GetMemory () const
     {
         return ram;
     }
 
-    uint32_t GetUsedMemorySize() const
+    uint32_t GetUsedMemorySize () const
     {
         return ram.size();
     }
 
 
     // Setters
-    void SetClusterSize(CLUSTER_SIZE c_size)
+    void SetClusterSize (CLUSTER_SIZE c_size)
     {
         clust_size = c_size.value;
     }
 
-    void SetOutputMode(OUTPUT_MODE m) {
+    void SetOutputMode (IO_MODE m) {
         OUTPUT = m;
+    }
+    void SetInputMode (IO_MODE m) {
+        INPUT  = m;
     }
 
 private:
     Source      source  = {"", false};
     std::vector<std::string> tokens;
-    uint8_t OUTPUT      = OUTPUT_MODE::CHAR;
+    uint8_t OUTPUT      = IO_MODE::CHAR;
+    uint8_t INPUT       = IO_MODE::CHAR;
 
     uint32_t    cursor  = 0;
     uint32_t    ptr     = 0;
@@ -300,19 +304,25 @@ private:
 
     bool ValPrint (uint32_t value) // .
     {
-        if ( OUTPUT_MODE::CHAR == OUTPUT ) {
-            std::cout << (char) (ram[ptr] & 0xFF);
+        if ( OUTPUT == IO_MODE::CHAR ) {
+            std::cout << (char)     ram[ptr];
         } else {
-            std::cout << (int) (ram[ptr] & 0xFF);
+            std::cout << (uint32_t) ram[ptr];
         }
         return true;
     }
 
     bool Input (uint32_t value) // ,
     {
-        int val;
-        std::cin >> val;
-        ram[ptr] = val;
+        if ( INPUT == IO_MODE::INT ) {
+            int val;
+            std::cin >> val;
+            ram[ptr] = val;
+        } else {
+            char charact;
+            std::cin >> charact;
+            ram[ptr] = (uint32_t) charact;
+        }
         return true;
     }
 

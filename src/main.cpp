@@ -201,8 +201,8 @@ int main(int argc, const char* argv[]) {
                 }
             } else if ( cname.compare("io") == 0 ) {
                 map<char, bool> valids { {'c', true}, {'i', true }};
-                if ( cvalue.size() < 2 ) {
-                    printf("\n[ERROR] Provide at least two values for the 'io' command");
+                if ( cvalue.size() != 2 ) {
+                    printf("\n[ERROR] You must provide a string of length = 2");
                     return 0;
                 }
                 for (auto c : cvalue) {
@@ -223,7 +223,7 @@ int main(int argc, const char* argv[]) {
                     OUTPUT_MODE = Brainfuck::IO_MODE::INT;
                     printf("\n[OUTPUT : MODE_INTEGER]");
                 } else {
-                    printf("\n[OUTPUT  : DEFAULT_CHAR]");
+                    printf("\n[OUTPUT : DEFAULT_CHAR]");
                 }
             }
         }

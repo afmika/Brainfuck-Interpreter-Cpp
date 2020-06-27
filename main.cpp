@@ -43,7 +43,7 @@ void runExecutionTests () {
 }
 
 void runAllTests (std::string str) {
-    printf("\n[[ TESTS MODE ]]\n");
+    printf("\n[[ TEST MODE ]]\n");
     runCompressionTest ();
     runExecutionTests  ();
     printf("\n");
@@ -55,8 +55,8 @@ void printInfos (std::string str) {
     printf("#                     JUNE 2020                     #\n");
     printf("#                [github.com/afmika]                #\n");
     printf("#####################################################\n");
-    printf("\ninfo | -i : Information    [arg : none    ]\n");
-    printf("\ntest | -t : Run all test   [arg : none    ]\n");
+    printf("\ninfo | -i : Information    [arg :    none ]\n");
+    printf("\ntest | -t : Run tests      [arg :    none ]\n");
     printf("\nrun  | -r : Execute a file [arg : filepath]\n");
 }
 

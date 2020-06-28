@@ -47,7 +47,7 @@ void runExecutionTests () {
         printf("\n[RUNNING : COMPRESSED SRC] : ");
         Brainfuck::Parser cparser ( source, true );
         cparser.SetOutputMode (Brainfuck::IO_MODE::CHAR); // default
-        uparser.SetInputMode  (Brainfuck::IO_MODE::CHAR); // default
+        cparser.SetInputMode  (Brainfuck::IO_MODE::CHAR); // default
         cparser.SetClusterSize ( Brainfuck::ONE_BYTE );
         cparser.Run();
     }
@@ -75,6 +75,11 @@ void printInfos (string str) {
 
     printf("\n[[ Advanced uses of the run command ]]\n");
 
+    printf("\n## Debug mode with the debug/-d command\n");
+    printf("\nExamples:\n");
+    printf("$ afbf run -d myfile.bf\n");
+    printf("$ afbf run debug myfile.bf\n");
+
     printf("\n## Customized cluster size (8, 16 or 32)\n");
     printf("[usage] $ afbf run memory=size myfile.bf\n");
     printf("\nExample : \nafbf run memory=8 myfile.bf\n");
@@ -87,34 +92,63 @@ void printInfos (string str) {
     printf("$ afbf run io=ic myfile.bf\n");
     printf("2. char as input, char as output\n");
     printf("$ afbf run io=cc myfile.bf\n");
+
     printf("\n## Combined version\n");
-    printf("You can combine the two latest mode along with the run command\n");
+    printf("You can combine the 3 latest mode along with the run command\n");
     printf("Examples:\n");
     printf("$ afbf run io=ic memory=8 myfile.bf\n");
     printf("$ afbf run memory=16 io=ii myfile.bf\n");
     printf("$ afbf run memory=16 io=ci myfile.bf\n");
+    printf("$ afbf run memory=16 io=ci debug myfile.bf\n");
+    printf("$ afbf run debug memory=32 io=ci myfile.bf\n");
+    printf("$ afbf run -d io=ci myfile.bf\n");
 }
 
-void runFile (string filename) {
-    printf("\n--[ EXECUTION ]-------------------------\n\n");
+string getFileContent(string filename) {
     string content;
     ifstream file(filename.c_str(),  ios::in);
     if ( ! file.is_open() ) {
-        cerr << "\nError opening source file" << "\n";
-        return;
+        return content;
     }
     while ( !file.eof() ) {
         string tmp = "";
         file >> tmp;
         content += tmp;
     }
+    file.close();
+    return content;
+}
 
+void runFile (string filename) {
+    printf("\n--[ EXECUTION ]-------------------------\n\n");
+    string content = getFileContent(filename);
+    if ( content.compare("") == 0 ) {
+        cerr << "\nError opening source file" << "\n";
+        return;
+    }
     Brainfuck::Parser parser ( content, true );
     parser.SetOutputMode ( OUTPUT_MODE ); // default
-    // parser.SetInputMode ( INPUT_MODE  ); // default
+    parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
     parser.Run();
-    // printf("content \n%s\n", content.c_str());
+}
+
+void runDebugMode (string filename) {
+    printf("\n--[ DEBUG MODE ]-------------------------\n\n");
+    string content = getFileContent(filename);
+    if ( content.compare("") == 0 ) {
+        cerr << "\nError opening source file" << "\n";
+        return;
+    }
+    Brainfuck::Parser parser ( content, true );
+    parser.SetOutputMode ( OUTPUT_MODE ); // default
+    parser.SetInputMode ( INPUT_MODE  ); // default
+    parser.SetClusterSize ( CLUSTER );
+    while ( parser.Next() ) {
+        string token = parser.GetCurrentToken();
+        if ( token.compare(".") == 0 )
+            getchar();
+    }
 }
 
 // Command map
@@ -128,7 +162,9 @@ map<string, void (*)(string) > cmd {
     {"-r"  , &runFile    },
 
     {"io"    , nullptr},
-    {"memory", nullptr}
+    {"memory", nullptr},
+    {"debug" , nullptr},
+    {"-d" , nullptr},
 };
 
 bool isValidCommand (string com) {
@@ -225,6 +261,10 @@ int main(int argc, const char* argv[]) {
                 } else {
                     printf("\n[OUTPUT : DEFAULT_CHAR]");
                 }
+            } else if ( cname.compare("debug") == 0 || cname.compare("-d") == 0 ) {
+                printf("\n[DEBUG MODE]\n");
+                runDebugMode( filename );
+                return 0;
             }
         }
         (*cmd[main_com]) (filename);

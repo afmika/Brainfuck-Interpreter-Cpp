@@ -236,6 +236,11 @@ public:
         return tokens[cursor];
     }
 
+    std::string GetTokenAt (uint32_t pos) // [NOTE] : not const
+    {
+        return tokens[pos];
+    }
+
     std::map<uint32_t, uint32_t> GetMemory () const
     {
         return ram;
@@ -430,7 +435,7 @@ private:
     }
 
     void DisplayError(std::string error, uint32_t pos) {
-        printf("[Error] %s at cursor=%d, char. \"%c\"", error.c_str(), pos, source.at(pos));
+        printf("[Error] %s at cursor=%d, token = \"%s\"", error.c_str(), pos, GetTokenAt(pos).c_str() );
     }
 };
 

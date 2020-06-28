@@ -15,6 +15,13 @@ $ afbf run myfile.bf
 ```
 [[ Advanced uses of the run command ]]
 
+## Debug mode with the debug/-d command
+```
+Examples:
+$ afbf run -d myfile.bf
+$ afbf run debug myfile.bf
+```
+
 ## Customized cluster size (8, 16 or 32)
 ```
 [usage] $ afbf run memory=size myfile.bf
@@ -41,4 +48,7 @@ Examples:
 $ afbf run io=ic memory=8 myfile.bf
 $ afbf run memory=16 io=ii myfile.bf
 $ afbf run memory=16 io=ci myfile.bf
+$ afbf run memory=16 io=ci debug myfile.bf
+$ afbf run debug memory=32 io=ci myfile.bf
+$ afbf run -d io=ci myfile.bf
 ```

@@ -39,7 +39,13 @@ const CLUSTER_SIZE TWO_BYTES  = {16};
 const CLUSTER_SIZE FOUR_BYTES = {32};
 const std::string symbols = ".,+-<>[]#";
 enum IO_MODE {
-    CHAR, INT
+    CHAR, INT // INPUT/OUTPUT MODE
+};
+
+std::map<uint8_t, uint32_t> UINT_MASK {
+    {  8, 0x000000FF}, // 1 x FF
+    { 16, 0x0000FFFF}, // 2 x FF
+    { 32, 0xFFFFFFFF}  // 4 x FF
 };
 
 std::map<char, int> sign = {
@@ -227,9 +233,6 @@ public:
         return ptr;
     }
 
-    uint8_t GetMemoryAt (uint32_t p) {
-        return ram[p];
-    }
 
     std::string GetCurrentToken () // [NOTE] : not const
     {
@@ -244,6 +247,27 @@ public:
     std::map<uint32_t, uint32_t> GetMemory () const
     {
         return ram;
+    }
+
+    uint8_t GetMemoryAt (uint32_t p) {
+        return ram[p];
+    }
+
+    std::string GetMemoryIntervalAsString (int min_val, int max_val) // [NOTE] int can be negative
+    {
+        std::string result = "";
+        for (int i = min_val; i <= max_val; i++) {
+            uint32_t pos = i & UINT_MASK[clust_size];
+            std::string cur = "";
+            if ( ram.find( pos ) == ram.end() ) {
+                cur = "0";
+            } else {
+                cur = std::to_string( GetMemoryAt(pos) );
+                if ( pos == ptr ) cur = "[" + cur + "]";
+            }
+            result += " " + cur + " ";
+        }
+        return result;
     }
 
     uint32_t GetUsedMemorySize () const
@@ -298,12 +322,14 @@ private:
     bool PtrDecr  (uint32_t value) // <
     {
         ptr += value;
+        truncatePtr();
         return true;
     }
 
     bool PtrIncr  (uint32_t value) // >
     {
         ptr -= value;
+        truncatePtr();
         return true;
     }
 
@@ -371,18 +397,14 @@ private:
 
     void truncateCluster() {
         // (*cluster) %= size_cluster
-        switch (clust_size) {
-            case  8:
-                ram[ptr] &= 0x000000FF;
-                break;
-            case 16:
-                ram[ptr] &= 0x0000FFFF;
-                break;
-            default:
-                // do nothing
-                break;
-        }
+        ram[ptr] &= UINT_MASK[ clust_size ];
     }
+
+    void truncatePtr() {
+        // (cluster) %= size_cluster
+        ptr      &= UINT_MASK[ clust_size ];
+    }
+
 
     bool RunAsString () {
         if ( cursor == source.value.size() ) {

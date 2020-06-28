@@ -144,10 +144,21 @@ void runDebugMode (string filename) {
     parser.SetOutputMode ( OUTPUT_MODE ); // default
     parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
+    int margin = 7;
     while ( parser.Next() ) {
         string token = parser.GetCurrentToken();
-        if ( token.compare(".") == 0 )
-            getchar();
+        int   center = parser.GetPtr();
+        int left     = center - margin;
+        int right    = center + margin;
+        string memo  = parser.GetMemoryIntervalAsString(left, right);
+
+        left  &= Brainfuck::UINT_MASK[CLUSTER.value];
+        right &= Brainfuck::UINT_MASK[CLUSTER.value];
+        printf("\n\nVRAM $%08x - $%08x", left, right);
+        printf("\n---------------------------------------------------\n");
+        printf("%s", memo.c_str());
+        printf("\n---------------------------------------------------");
+        getchar();
     }
 }
 

@@ -10,6 +10,10 @@ Brainfuck::CLUSTER_SIZE CLUSTER = Brainfuck::ONE_BYTE.value;
 Brainfuck::IO_MODE INPUT_MODE   = Brainfuck::IO_MODE::CHAR;
 Brainfuck::IO_MODE OUTPUT_MODE  = Brainfuck::IO_MODE::CHAR;
 
+// debug
+bool D_PRINT_INSTR  = false;
+bool D_STEP_BY_STEP = true;
+
 // Tests
 vector<string> tests {
     // Hello World
@@ -74,11 +78,18 @@ void printInfos (string str) {
     printf("Example :\n$ afbf run myfile.bf\n");
 
     printf("\n[[ Advanced uses of the run command ]]\n");
-
     printf("\n## Debug mode with the debug/-d command\n");
+    printf("[usage] $ afbf run debug=value myfile.bf\n");
+    printf("[usage] $ afbf run debug myfile.bf\n");
+    printf("[!] value can be replaced by print, end or step\n");
+    printf("\t* step  : debug at each instruction\n");
+    printf("\t* print : debug each time the print instruction is executed\n");
+    printf("\t* end   : display the final memory state after the program execution\n");
     printf("\nExamples:\n");
     printf("$ afbf run -d myfile.bf\n");
     printf("$ afbf run debug myfile.bf\n");
+    printf("$ afbf run -d=print myfile.bf\n");
+    printf("$ afbf run debug=end myfile.bf\n");
 
     printf("\n## Customized cluster size (8, 16 or 32)\n");
     printf("[usage] $ afbf run memory=size myfile.bf\n");
@@ -94,14 +105,15 @@ void printInfos (string str) {
     printf("$ afbf run io=cc myfile.bf\n");
 
     printf("\n## Combined version\n");
-    printf("You can combine the 3 latest mode along with the run command\n");
+    printf("You can combine all of them along with the run command\n");
     printf("Examples:\n");
     printf("$ afbf run io=ic memory=8 myfile.bf\n");
     printf("$ afbf run memory=16 io=ii myfile.bf\n");
     printf("$ afbf run memory=16 io=ci myfile.bf\n");
     printf("$ afbf run memory=16 io=ci debug myfile.bf\n");
     printf("$ afbf run debug memory=32 io=ci myfile.bf\n");
-    printf("$ afbf run -d io=ci myfile.bf\n");
+    printf("$ afbf run -d=print io=ci myfile.bf\n");
+    printf("$ afbf run debug=step io=ci myfile.bf\n");
 }
 
 string getFileContent(string filename) {
@@ -134,7 +146,6 @@ void runFile (string filename) {
 }
 
 void runDebugMode (string filename) {
-    printf("\n--[ DEBUG MODE ]-------------------------\n\n");
     string content = getFileContent(filename);
     if ( content.compare("") == 0 ) {
         cerr << "\nError opening source file" << "\n";
@@ -145,20 +156,43 @@ void runDebugMode (string filename) {
     parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
     int margin = 7;
-    while ( parser.Next() ) {
+    if ( D_STEP_BY_STEP ) {
+        while ( parser.Next() ) {
+            string token = parser.GetCurrentToken();
+            int   center = parser.GetPtr();
+            int left     = center - margin;
+            int right    = center + margin;
+            string memo  = parser.GetMemoryIntervalAsString(left, right);
+
+            left  &= Brainfuck::UINT_MASK[CLUSTER.value];
+            right &= Brainfuck::UINT_MASK[CLUSTER.value];
+            if ( D_PRINT_INSTR && token.compare(".") == 0) {
+                printf("\n\nVRAM $%08x - $%08x [token = \"%s\"]", left, right, token.c_str());
+                printf("\n---------------------------------------------------\n");
+                printf("%s", memo.c_str());
+                printf("\n-------------[ ENTER : CONTINUE ]------------------");
+                getchar();
+            }
+            if ( ! D_PRINT_INSTR ) {
+                printf("\n\nVRAM $%08x - $%08x [token = \"%s\"]", left, right, token.c_str());
+                printf("\n---------------------------------------------------\n");
+                printf("%s", memo.c_str());
+                printf("\n-------------[ ENTER : CONTINUE ]------------------");
+                getchar(); // at each Next(token)
+            }
+        }
+    } else {
+        parser.Run();
         string token = parser.GetCurrentToken();
         int   center = parser.GetPtr();
         int left     = center - margin;
         int right    = center + margin;
         string memo  = parser.GetMemoryIntervalAsString(left, right);
-
         left  &= Brainfuck::UINT_MASK[CLUSTER.value];
         right &= Brainfuck::UINT_MASK[CLUSTER.value];
-        printf("\n\nVRAM $%08x - $%08x", left, right);
+        printf("\n\nVRAM $%08x - $%08x [token = \"%s\"]", left, right, token.c_str());
         printf("\n---------------------------------------------------\n");
-        printf("%s", memo.c_str());
-        printf("\n---------------------------------------------------");
-        getchar();
+        printf("%s\n", memo.c_str());
     }
 }
 
@@ -273,7 +307,21 @@ int main(int argc, const char* argv[]) {
                     printf("\n[OUTPUT : DEFAULT_CHAR]");
                 }
             } else if ( cname.compare("debug") == 0 || cname.compare("-d") == 0 ) {
-                printf("\n[DEBUG MODE]\n");
+                if ( cvalue.compare("") == 0 ) {
+                    printf("\n[DEBUG MODE : DEFAULT (STEP BY STEP)]\n");
+                } else if ( cvalue.compare("step") == 0 ) {
+                    printf("\n[DEBUG MODE : STEP BY STEP]\n");
+                    D_STEP_BY_STEP = true;
+                } else if ( cvalue.compare("end") == 0  ) {
+                    printf("\n[DEBUG MODE : DISPLAY MEMORY AT THE END]\n");
+                    D_STEP_BY_STEP = false;
+                } else if ( cvalue.compare("print") == 0 ) {
+                    printf("\n[DEBUG MODE : DISPLAY MEMORY AT EACH PRINT INSTR]\n");
+                    D_STEP_BY_STEP = true;
+                    D_PRINT_INSTR  = true;
+                } else {
+                    printf("\n[ERROR] INVALID DEBUG OPTION, %s != step,end,print", cvalue.c_str());
+                }
                 runDebugMode( filename );
                 return 0;
             }

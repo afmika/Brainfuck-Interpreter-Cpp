@@ -38,6 +38,7 @@ const CLUSTER_SIZE ONE_BYTE   = { 8};
 const CLUSTER_SIZE TWO_BYTES  = {16};
 const CLUSTER_SIZE FOUR_BYTES = {32};
 const std::string symbols = ".,+-<>[]#";
+
 enum IO_MODE {
     CHAR, INT // INPUT/OUTPUT MODE
 };
@@ -244,13 +245,13 @@ public:
         return tokens[pos];
     }
 
-    std::map<uint32_t, uint32_t> GetMemory () const
+    std::vector<uint32_t> GetMemory () const
     {
-        return ram;
+        return *ram;
     }
 
     uint8_t GetMemoryAt (uint32_t p) {
-        return ram[p];
+        return (*ram)[p];
     }
 
     std::string GetMemoryIntervalAsString (int min_val, int max_val) // [NOTE] int can be negative
@@ -259,7 +260,7 @@ public:
         for (int i = min_val; i <= max_val; i++) {
             uint32_t pos = i & UINT_MASK[clust_size];
             std::string cur = "";
-            if ( ram.find( pos ) == ram.end() ) {
+            if ( i < 0 ) {
                 cur = "0";
             } else {
                 cur = std::to_string( GetMemoryAt(pos) );
@@ -270,9 +271,9 @@ public:
         return result;
     }
 
-    uint32_t GetUsedMemorySize () const
+    uint32_t GetMemorySize () const
     {
-        return ram.size();
+        return total_mem;
     }
 
 
@@ -299,36 +300,37 @@ private:
     uint32_t    ptr     = 0;
     bool        BREAK   = false;
     uint8_t clust_size  = 8;
+    int       total_mem = 30000;
 
-    std::map<uint32_t, uint32_t> ram; // virtual memory
+    std::vector<uint32_t>* ram = new std::vector<uint32_t>(total_mem, 0);; // virtual memory
     std::map<char, bool (Brainfuck::Parser::*) (uint32_t) > instr_map; // instruction map
     std::stack<uint32_t> open_loop_pos;
 
     // instructions
     bool ValDecr  (uint32_t value) // -
     {
-        ram[ptr] -= value;
+        (*ram)[ptr] -= value;
         truncateCluster();
         return true;
     }
 
     bool ValIncr  (uint32_t value) // +
     {
-        ram[ptr] += value;
+        (*ram)[ptr] += value;
         truncateCluster();
         return true;
     }
 
     bool PtrDecr  (uint32_t value) // <
     {
-        ptr += value;
+        ptr -= value;
         truncatePtr();
         return true;
     }
 
     bool PtrIncr  (uint32_t value) // >
     {
-        ptr -= value;
+        ptr += value;
         truncatePtr();
         return true;
     }
@@ -336,9 +338,9 @@ private:
     bool ValPrint (uint32_t value) // .
     {
         if ( OUTPUT == IO_MODE::CHAR ) {
-            std::cout << (char)     ram[ptr];
+			printf("%c", (*ram)[ptr]);
         } else {
-            std::cout << (uint32_t) ram[ptr];
+			printf("%d", (*ram)[ptr]);
         }
         return true;
     }
@@ -348,11 +350,11 @@ private:
         if ( INPUT == IO_MODE::INT ) {
             int val;
             std::cin >> val;
-            ram[ptr] = val;
+            (*ram)[ptr] = val;
         } else {
             char charact;
             std::cin >> charact;
-            ram[ptr] = (uint32_t) charact;
+            (*ram)[ptr] = (uint32_t) charact;
         }
         return true;
     }
@@ -365,7 +367,7 @@ private:
 
     bool LoopClose(uint32_t value) // ]
     {
-        if ( ram[ptr] != 0 ) {
+        if ( (*ram)[ptr] != 0 ) {
             cursor = open_loop_pos.top();
         } else {
             if ( open_loop_pos.empty() ) {
@@ -397,7 +399,7 @@ private:
 
     void truncateCluster() {
         // (*cluster) %= size_cluster
-        ram[ptr] &= UINT_MASK[ clust_size ];
+        (*ram)[ptr] &= UINT_MASK[ clust_size ];
     }
 
     void truncatePtr() {

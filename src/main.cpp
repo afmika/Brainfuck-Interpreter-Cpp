@@ -14,6 +14,9 @@ Brainfuck::IO_MODE OUTPUT_MODE  = Brainfuck::IO_MODE::CHAR;
 bool D_PRINT_INSTR  = false;
 bool D_STEP_BY_STEP = true;
 
+// execution
+bool FAST_RUNTIME = true;
+
 // Tests
 vector<string> tests {
     // Hello World
@@ -138,7 +141,7 @@ void runFile (string filename) {
         cerr << "\nError opening source file" << "\n";
         return;
     }
-    Brainfuck::Parser parser ( content, true );
+    Brainfuck::Parser parser ( content, FAST_RUNTIME );
     parser.SetOutputMode ( OUTPUT_MODE ); // default
     parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
@@ -151,7 +154,7 @@ void runDebugMode (string filename) {
         cerr << "\nError opening source file" << "\n";
         return;
     }
-    Brainfuck::Parser parser ( content, true );
+    Brainfuck::Parser parser ( content, FAST_RUNTIME );
     parser.SetOutputMode ( OUTPUT_MODE ); // default
     parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
@@ -164,8 +167,10 @@ void runDebugMode (string filename) {
             int right    = center + margin;
             string memo  = parser.GetMemoryIntervalAsString(left, right);
 
-            left  &= Brainfuck::UINT_MASK[CLUSTER.value];
-            right &= Brainfuck::UINT_MASK[CLUSTER.value];
+            uint32_t max_capacity = parser.GetMemorySize();
+            left  &= max_capacity;
+            right &= max_capacity;
+
             if ( D_PRINT_INSTR && token.compare(".") == 0) {
                 printf("\n\nVRAM $%08x - $%08x [token = \"%s\"]", left, right, token.c_str());
                 printf("\n---------------------------------------------------\n");
@@ -188,8 +193,9 @@ void runDebugMode (string filename) {
         int left     = center - margin;
         int right    = center + margin;
         string memo  = parser.GetMemoryIntervalAsString(left, right);
-        left  &= Brainfuck::UINT_MASK[CLUSTER.value];
-        right &= Brainfuck::UINT_MASK[CLUSTER.value];
+        uint32_t max_capacity = parser.GetMemorySize();
+        left  &= max_capacity;
+        right &= max_capacity;
         printf("\n\nVRAM $%08x - $%08x [token = \"%s\"]", left, right, token.c_str());
         printf("\n---------------------------------------------------\n");
         printf("%s\n", memo.c_str());
@@ -210,6 +216,7 @@ map<string, void (*)(string) > cmd {
     {"memory", nullptr},
     {"debug" , nullptr},
     {"-d" , nullptr},
+    {"slow" , nullptr}
 };
 
 bool isValidCommand (string com) {
@@ -268,7 +275,10 @@ int main(int argc, const char* argv[]) {
                 return 0;
             }
             string cname = p.first, cvalue = p.second;
-            if ( cname.compare("memory") == 0 ) {
+			if ( cname.compare("slow") == 0 ) {
+				printf("\n[EXECUTION : SLOW_MODE ]");
+				FAST_RUNTIME = false;
+			} else if ( cname.compare("memory") == 0 ) {
                 int cur = Brainfuck::str_to_int(cvalue);
                 if ( cur == 8 ) {
                     CLUSTER = Brainfuck::ONE_BYTE;

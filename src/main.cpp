@@ -13,7 +13,7 @@ Brainfuck::IO_MODE OUTPUT_MODE  = Brainfuck::IO_MODE::CHAR;
 // debug
 bool D_PRINT_INSTR  = false;
 bool D_STEP_BY_STEP = true;
-uint32_t MEM_DUMP_LIMIT = 0xFF;
+uint32_t MEM_DUMP_LIMIT = 131;
 bool D_SHOW_MEM_DUMP = false;
 
 // execution
@@ -288,6 +288,7 @@ int main(int argc, const char* argv[]) {
         // main_com is assumed to be equal to -r or run
 
         // the latest arg is assumed to be the filepath
+        bool is_debugging = false;
         for (int i = 2; i < argc - 1; i++) {
             string temp(argv[i]);
             pair<string, string> p = extractCmd(temp);
@@ -359,11 +360,11 @@ int main(int argc, const char* argv[]) {
                 } else {
                     printf("\n[ERROR] INVALID DEBUG OPTION, %s != step,end,print", cvalue.c_str());
                 }
-                runDebugMode( filename );
-                return 0;
+                is_debugging = true;
             }
         }
-        (*cmd[main_com]) (filename);
+        if ( !is_debugging )    (*cmd[main_com]) (filename);
+        else runDebugMode( filename );
     }
     return 0;
 }

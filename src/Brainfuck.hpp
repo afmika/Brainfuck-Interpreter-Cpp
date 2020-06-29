@@ -269,7 +269,7 @@ public:
             if ( i < 0 ) {
                 cur = "0";
             } else {
-                cur = NumberFormat("%04d", GetMemoryAt(i) );
+                cur = NumberFormat("%03d", GetMemoryAt(i) );
                 if ( pos == ptr ) cur = "[" + cur + "]";
             }
             result += " " + cur + " ";
@@ -281,18 +281,18 @@ public:
     {
         std::string result = "";
         // 00 - 11 : m1 m2 ..... m12
-        int interval = 8;
+        int interval = 12;
         uint32_t begin = 0, end = interval - 1;
         for (uint32_t i = 0; i <= std::min(limit, GetMemorySize()); i++) {
-            if ( i % 12 == 0 ) {
+            if ( i % interval == 0 ) {
                 char temp[200];
-                sprintf(temp, "\n%04d - %04d | ", begin, end);
+                sprintf(temp, "\n%05d - %05d | ", begin, end);
                 std::string t(temp);
                 result += t;
                 begin += interval;
                 end += interval;
             }
-            std::string cur = NumberFormat("%04d", GetMemoryAt(i) );
+            std::string cur = NumberFormat("%03d", GetMemoryAt(i) );
             if ( i == ptr ) result += "[" + cur + "]";
             else result += " " + cur + " ";
         }

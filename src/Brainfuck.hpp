@@ -266,12 +266,8 @@ public:
         for (int i = min_val; i <= max_val; i++) {
             uint32_t pos = i & UINT_MASK[clust_size];
             std::string cur = "";
-            if ( i < 0 ) {
-                cur = "0";
-            } else {
-                cur = NumberFormat("%03d", GetMemoryAt(i) );
-                if ( pos == ptr ) cur = "[" + cur + "]";
-            }
+			cur = NumberFormat("%03d", (i < 0 ? 0 : GetMemoryAt(i)) );
+			if ( pos == ptr ) cur = "[" + cur + "]";
             result += " " + cur + " ";
         }
         return result;

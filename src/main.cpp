@@ -173,7 +173,7 @@ void runDebugMode (string filename) {
     parser.SetOutputMode ( OUTPUT_MODE ); // default
     parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
-    int margin = 7;
+    int margin = 4;
 
     if ( D_STEP_BY_STEP ) {
         while ( parser.Next() ) {
@@ -184,21 +184,21 @@ void runDebugMode (string filename) {
             string memo  = parser.GetMemoryIntervalAsString(left, right);
 
             uint32_t max_capacity = parser.GetMemorySize();
-            left  &= max_capacity;
-            right &= max_capacity;
+            left  %= max_capacity;
+            right %= max_capacity;
 
             if ( D_PRINT_INSTR && token.compare(".") == 0) {
-                printf("\n\nVRAM $%08x - $%08x [token = \"%s\"]", left, right, token.c_str());
-                printf("\n---------------------------------------------------\n");
+                printf("\n\nVRAM $%05d - $%05d [token = \"%s\"]", left, right, token.c_str());
+                printf("\n-----------------------------------------------\n");
                 printf("%s", memo.c_str());
-                printf("\n-------------[ ENTER : CONTINUE ]------------------");
+                printf("\n-------------[ ENTER : CONTINUE ]--------------");
                 getchar();
             }
             if ( ! D_PRINT_INSTR ) {
-                printf("\n\nVRAM $%08x - $%08x [token = \"%s\"]", left, right, token.c_str());
-                printf("\n---------------------------------------------------\n");
+                printf("\n\nVRAM $%05d - $%05d [token = \"%s\"]", left, right, token.c_str());
+                printf("\n-----------------------------------------------\n");
                 printf("%s", memo.c_str());
-                printf("\n-------------[ ENTER : CONTINUE ]------------------");
+                printf("\n-------------[ ENTER : CONTINUE ]--------------");
                 getchar(); // at each Next(token)
             }
         }

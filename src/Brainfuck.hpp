@@ -273,8 +273,7 @@ public:
         return result;
     }
 
-    std::string GetMemoryDumpAsString (uint32_t limit) // [NOTE] int can be negative
-    {
+    std::string GetMemoryDumpAsString (uint32_t limit) {
         std::string result = "";
         // 00 - 11 : m1 m2 ..... m12
         int interval = 12;
@@ -326,7 +325,7 @@ private:
     uint8_t clust_size  = 8;
     int       total_mem = 30000;
 
-    std::vector<uint32_t>* ram = new std::vector<uint32_t>(total_mem, 0);; // virtual memory
+    std::vector<uint32_t>* ram = new std::vector<uint32_t>(total_mem, 0); // virtual memory
     std::map<char, bool (Brainfuck::Parser::*) (uint32_t) > instr_map; // instruction map
     std::stack<uint32_t> open_loop_pos;
 

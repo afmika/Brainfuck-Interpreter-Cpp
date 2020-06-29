@@ -164,6 +164,12 @@ Source UncompressCode(Source source) {
     return result;
 }
 
+std::string NumberFormat(std::string base, uint32_t value) {
+    char str[100];
+    sprintf(str, base.c_str(), value);
+    std::string res(str);
+    return str;
+}
 
 // Main class
 class Parser {
@@ -263,10 +269,32 @@ public:
             if ( i < 0 ) {
                 cur = "0";
             } else {
-                cur = std::to_string( GetMemoryAt(pos) );
+                cur = NumberFormat("%04d", GetMemoryAt(i) );
                 if ( pos == ptr ) cur = "[" + cur + "]";
             }
             result += " " + cur + " ";
+        }
+        return result;
+    }
+
+    std::string GetMemoryDumpAsString (uint32_t limit) // [NOTE] int can be negative
+    {
+        std::string result = "";
+        // 00 - 11 : m1 m2 ..... m12
+        int interval = 8;
+        uint32_t begin = 0, end = interval - 1;
+        for (uint32_t i = 0; i <= std::min(limit, GetMemorySize()); i++) {
+            if ( i % 12 == 0 ) {
+                char temp[200];
+                sprintf(temp, "\n%04d - %04d | ", begin, end);
+                std::string t(temp);
+                result += t;
+                begin += interval;
+                end += interval;
+            }
+            std::string cur = NumberFormat("%04d", GetMemoryAt(i) );
+            if ( i == ptr ) result += "[" + cur + "]";
+            else result += " " + cur + " ";
         }
         return result;
     }

@@ -13,6 +13,8 @@ Brainfuck::IO_MODE OUTPUT_MODE  = Brainfuck::IO_MODE::CHAR;
 // debug
 bool D_PRINT_INSTR  = false;
 bool D_STEP_BY_STEP = true;
+uint32_t MEM_DUMP_LIMIT = 0xFF;
+bool D_SHOW_MEM_DUMP = false;
 
 // execution
 bool FAST_RUNTIME = true;
@@ -94,6 +96,13 @@ void printInfos (string str) {
     printf("$ afbf run -d=print myfile.bf\n");
     printf("$ afbf run debug=end myfile.bf\n");
 
+    printf("\n## Show memory dump with dump=mem_limit\n");
+    printf("[usage] $ afbf run dump=size myfile.bf\n");
+    printf("[usage] $ afbf run dump myfile.bf\n");
+    printf("\nExamples:\n");
+    printf("$ afbf run dump myfile.bf\n");
+    printf("$ afbf run dump=128 myfile.bf\n");
+
     printf("\n## Customized cluster size (8, 16 or 32)\n");
     printf("[usage] $ afbf run memory=size myfile.bf\n");
     printf("\nExample : \nafbf run memory=8 myfile.bf\n");
@@ -146,6 +155,11 @@ void runFile (string filename) {
     parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
     parser.Run();
+
+    if ( D_SHOW_MEM_DUMP ) {
+        string dump = parser.GetMemoryDumpAsString( MEM_DUMP_LIMIT );
+        printf("%s\n", dump.c_str());
+    }
 }
 
 void runDebugMode (string filename) {
@@ -154,11 +168,13 @@ void runDebugMode (string filename) {
         cerr << "\nError opening source file" << "\n";
         return;
     }
+
     Brainfuck::Parser parser ( content, FAST_RUNTIME );
     parser.SetOutputMode ( OUTPUT_MODE ); // default
     parser.SetInputMode ( INPUT_MODE  ); // default
     parser.SetClusterSize ( CLUSTER );
     int margin = 7;
+
     if ( D_STEP_BY_STEP ) {
         while ( parser.Next() ) {
             string token = parser.GetCurrentToken();
@@ -200,6 +216,10 @@ void runDebugMode (string filename) {
         printf("\n---------------------------------------------------\n");
         printf("%s\n", memo.c_str());
     }
+    if ( D_SHOW_MEM_DUMP ) {
+        string dump = parser.GetMemoryDumpAsString( MEM_DUMP_LIMIT );
+        printf("%s\n", dump.c_str());
+    }
 }
 
 // Command map
@@ -215,8 +235,9 @@ map<string, void (*)(string) > cmd {
     {"io"    , nullptr},
     {"memory", nullptr},
     {"debug" , nullptr},
-    {"-d" , nullptr},
-    {"slow" , nullptr}
+    {"-d"    , nullptr},
+    {"slow"  , nullptr},
+    {"dump"  , nullptr}
 };
 
 bool isValidCommand (string com) {
@@ -278,6 +299,12 @@ int main(int argc, const char* argv[]) {
 			if ( cname.compare("slow") == 0 ) {
 				printf("\n[EXECUTION : SLOW_MODE ]");
 				FAST_RUNTIME = false;
+			} else if ( cname.compare("dump") == 0 ) {
+                if ( cvalue.compare("") != 0 ) {
+                    MEM_DUMP_LIMIT = Brainfuck::str_to_int(cvalue);
+                }
+                printf("\n[MEMORY_DUMP : ON [%d] ]", MEM_DUMP_LIMIT);
+                D_SHOW_MEM_DUMP = true;
 			} else if ( cname.compare("memory") == 0 ) {
                 int cur = Brainfuck::str_to_int(cvalue);
                 if ( cur == 8 ) {

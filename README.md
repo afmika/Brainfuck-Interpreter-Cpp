@@ -31,6 +31,17 @@ $ afbf run -d=print myfile.bf
 $ afbf run debug=end myfile.bf
 ```
 
+## Show memory dump with dump=mem_limit
+```
+[usage] $ afbf run dump=size 
+myfile.bf
+[usage] $ afbf run dump myfile.bf
+
+Examples:
+$ afbf run dump myfile.bf
+$ afbf run dump=128 myfile.bf
+```
+
 ## Customized cluster size (8, 16 or 32)
 ```
 [usage] $ afbf run memory=size myfile.bf

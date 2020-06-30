@@ -33,8 +33,7 @@ $ afbf run debug=end myfile.bf
 
 ## Show memory dump with dump=mem_limit
 ```
-[usage] $ afbf run dump=size 
-myfile.bf
+[usage] $ afbf run dump=size myfile.bf
 [usage] $ afbf run dump myfile.bf
 
 Examples:

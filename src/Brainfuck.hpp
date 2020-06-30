@@ -265,8 +265,7 @@ public:
         std::string result = "";
         for (int i = min_val; i <= max_val; i++) {
             uint32_t pos = i & UINT_MASK[clust_size];
-            std::string cur = "";
-			cur = NumberFormat("%03d", (i < 0 ? 0 : GetMemoryAt(i)) );
+            std::string cur = NumberFormat("%03d", (i < 0 ? 0 : GetMemoryAt(i)) );
 			if ( pos == ptr ) cur = "[" + cur + "]";
             result += " " + cur + " ";
         }
@@ -427,7 +426,7 @@ private:
 
     void truncatePtr() {
         // (cluster) %= size_cluster
-        ptr      &= UINT_MASK[ clust_size ];
+        ptr         &= UINT_MASK[ clust_size ];
     }
 
 

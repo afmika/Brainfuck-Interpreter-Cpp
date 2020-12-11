@@ -164,6 +164,33 @@ Source UncompressCode(Source source) {
     return result;
 }
 
+// adv optimizations
+// detects [+] and [-]
+/*
+int detectClearLoop (std::vector<string> tokens, int pos ) {
+    int init_pos = pos;
+    std::string type_a = "[+]";
+    std::string type_b = "[-]";
+    if ( pos + 3 < (int) tokens.size() ) {
+        for (char c : type_a) {
+            std::string current(c);
+            if ( tokens[pos].compare(current) != 0 ) { found = false; break; }
+            pos++;
+            count = 0;
+        }
+        if ( found ) return pos;
+        pos = init_pos;
+        for (char c : type_b) {
+            std::string current(c);
+            if ( tokens[pos].compare(current) != 0 ) { found = false; break; }
+            pos++;
+        }
+        if ( found ) return pos;
+    }
+    return -1;
+}
+*/
+
 std::string NumberFormat(std::string base, uint32_t value) {
     char str[100];
     sprintf(str, base.c_str(), value);

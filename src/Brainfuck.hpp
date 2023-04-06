@@ -5,7 +5,12 @@
  **/
 
 #pragma once
-#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <stack>
+#include <cassert>
+#include <sstream>
 
 namespace Brainfuck {
 
@@ -192,7 +197,7 @@ int detectClearLoop (std::vector<string> tokens, int pos ) {
 */
 
 std::string NumberFormat(std::string base, uint32_t value) {
-    char str[100];
+    static char str[100];
     sprintf(str, base.c_str(), value);
     std::string res(str);
     return str;
@@ -273,7 +278,7 @@ public:
         return tokens[cursor];
     }
 
-    std::string GetTokenAt (uint32_t pos) // [NOTE] : not const
+    std::string GetTokenAt (int pos) // [NOTE] : not const
     {
         return tokens[pos];
     }
@@ -284,6 +289,7 @@ public:
     }
 
     uint8_t GetMemoryAt (uint32_t p) {
+        assert(p >= 0 && p < total_mem);
         return (*ram)[p];
     }
 
@@ -291,7 +297,7 @@ public:
     {
         std::string result = "";
         for (int i = min_val; i <= max_val; i++) {
-            uint32_t pos = i & UINT_MASK[clust_size];
+            int pos = i & UINT_MASK[clust_size];
             std::string cur = NumberFormat("%03d", (i < 0 ? 0 : GetMemoryAt(i)) );
 			if ( pos == ptr ) cur = "[" + cur + "]";
             result += " " + cur + " ";
@@ -306,7 +312,7 @@ public:
         uint32_t begin = 0, end = interval - 1;
         for (uint32_t i = 0; i <= std::min(limit, GetMemorySize()); i++) {
             if ( i % interval == 0 ) {
-                char temp[200];
+                static char temp[200];
                 sprintf(temp, "\n%05d - %05d | ", begin, end);
                 std::string t(temp);
                 result += t;
@@ -346,10 +352,10 @@ private:
     uint8_t INPUT       = IO_MODE::CHAR;
 
     uint32_t    cursor  = 0;
-    uint32_t    ptr     = 0;
     bool        BREAK   = false;
     uint8_t clust_size  = 8;
     int       total_mem = 30000;
+    int       ptr       = 0;
 
     std::vector<uint32_t>* ram = new std::vector<uint32_t>(total_mem, 0); // virtual memory
     std::map<char, bool (Brainfuck::Parser::*) (uint32_t) > instr_map; // instruction map
@@ -358,6 +364,7 @@ private:
     // instructions
     bool ValDecr  (uint32_t value) // -
     {
+        assert(ptr >= 0 && ptr < total_mem);
         (*ram)[ptr] -= value;
         truncateCluster();
         return true;
@@ -365,6 +372,7 @@ private:
 
     bool ValIncr  (uint32_t value) // +
     {
+        assert(ptr >= 0 && ptr < total_mem);
         (*ram)[ptr] += value;
         truncateCluster();
         return true;
@@ -373,6 +381,8 @@ private:
     bool PtrDecr  (uint32_t value) // <
     {
         ptr -= value;
+        if (ptr < 0)
+            ptr += total_mem;
         truncatePtr();
         return true;
     }
@@ -380,12 +390,14 @@ private:
     bool PtrIncr  (uint32_t value) // >
     {
         ptr += value;
+        if (ptr >= total_mem) ptr %= total_mem;
         truncatePtr();
         return true;
     }
 
     bool ValPrint (uint32_t value) // .
     {
+        assert(ptr >= 0 && ptr < total_mem);
         if ( OUTPUT == IO_MODE::CHAR ) {
 			printf("%c", (*ram)[ptr]);
         } else {
@@ -396,6 +408,7 @@ private:
 
     bool Input (uint32_t value) // ,
     {
+        assert(ptr >= 0 && ptr < total_mem);
         if ( INPUT == IO_MODE::INT ) {
             int val;
             std::cin >> val;
@@ -416,6 +429,7 @@ private:
 
     bool LoopClose(uint32_t value) // ]
     {
+        assert(ptr >= 0 && ptr < total_mem);
         if ( (*ram)[ptr] != 0 ) {
             cursor = open_loop_pos.top();
         } else {
@@ -448,6 +462,7 @@ private:
 
     void truncateCluster() {
         // (*cluster) %= size_cluster
+        assert(ptr >= 0 && ptr < total_mem);
         (*ram)[ptr] &= UINT_MASK[ clust_size ];
     }
 
@@ -507,7 +522,7 @@ private:
         return true;
     }
 
-    void DisplayError(std::string error, uint32_t pos) {
+    void DisplayError(std::string error, int pos) {
         printf("[Error] %s at cursor=%d, token = \"%s\"", error.c_str(), pos, GetTokenAt(pos).c_str() );
     }
 };

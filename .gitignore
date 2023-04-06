@@ -1,4 +1,2 @@
-*.hpp.gch
-*.h.gch
-*.o
+obj
 bin

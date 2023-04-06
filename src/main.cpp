@@ -1,5 +1,8 @@
-#include <bits/stdc++.h>
-#include "./Brainfuck.hpp"
+#include "Brainfuck.hpp"
+#include <iostream>
+#include <vector>
+#include <map>
+#include <fstream>
 
 using namespace std;
 
